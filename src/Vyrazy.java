@@ -356,13 +356,12 @@ public class Vyrazy {
 					String input = String.valueOf(line);
 					Lexer lexer = new Lexer(input);
 					Node ast = Parser.parse(lexer);
-					// System.out.printf("'%s' => '%s' = %d\n", input, ast.format(), ast.compute());
-					ast.tree("");
+					System.out.printf("'%s' => '%s' = %d\n", input, ast.format(), ast.compute());
+					// ast.tree("");
 				} else {
 					lastLine = currentLine;
 				}
 			}
-
 		}
 	}
 }
