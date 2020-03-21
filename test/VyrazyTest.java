@@ -168,4 +168,25 @@ class VyrazyTest {
 		System.setOut(sysOutBackup);
 	}
 
+	@Test
+	public void testImplicitVariablesWithComments() {
+		ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+		PrintStream sysOutBackup = System.out;
+		System.setOut(new PrintStream(outContent));
+
+		String inputString = "4 + 5        # 9\r\n" + "2 * _        # 18\r\n" + "a = _ + 2    # a = 20\r\n"
+				+ "_            # 20\r\n" + "\r\n";
+
+		InputStream sysInBackup = System.in; // backup System.in to restore it later
+		ByteArrayInputStream in = new ByteArrayInputStream(inputString.getBytes());
+		System.setIn(in);
+
+		Vyrazy.main(null);
+
+		assertEquals("'2*(4+5)+2' => '(2 * (4 + 5) + 2)' = 20\n", outContent.toString());
+
+		System.setIn(sysInBackup);
+		System.setOut(sysOutBackup);
+	}
+
 }

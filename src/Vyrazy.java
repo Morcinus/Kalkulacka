@@ -272,7 +272,7 @@ public class Vyrazy {
 
 		}
 
-		public boolean findVarDeclaration(String input) {
+		public String findVarDeclaration(String input) {
 			char charArray[] = input.replaceAll("\\s+", "").toCharArray();
 
 			for (int i = 0; i < charArray.length; i++) {
@@ -285,12 +285,12 @@ public class Vyrazy {
 						variableValue = fillVariableValues(variableValue);
 						declareVariable(String.valueOf(charArray[i - 1]), variableValue);
 
-						return true;
+						return String.valueOf(variableValue);
 					}
 				}
 			}
 
-			return false;
+			return null;
 		}
 
 		private char[] fillVariableValues(char[] charArray) {
@@ -333,6 +333,33 @@ public class Vyrazy {
 			return input;
 		}
 
+		public String checkImplicidVariable(String input, String lastLine) {
+			input.replaceAll("\\s+", "");
+
+			if (input.contains("_")) {
+				String[] strings = input.split("_");
+
+				if (strings.length == 0) {
+					return lastLine;
+				} else if (strings.length == 1) {
+					if (strings[0].charAt(strings[0].length() - 1) == '*')
+						return strings[0] + "(" + lastLine + ")";
+					else {
+						return strings[0] + lastLine;
+					}
+				} else {
+					if (strings[0].charAt(strings[0].length() - 1) == '*') {
+						return strings[0] + "(" + lastLine + ")" + strings[1];
+					} else {
+						return strings[0] + lastLine + strings[1];
+					}
+				}
+
+			} else {
+				return input;
+			}
+		}
+
 		private void declareVariable(String variableName, char[] variableValue) {
 			variables.put(variableName, variableValue);
 		}
@@ -346,9 +373,17 @@ public class Vyrazy {
 		while (sc.hasNextLine()) {
 
 			String currentLine = sc.nextLine();
+			// Odstraneni komentare
 			currentLine = variableParser.removeComment(currentLine);
-			if (variableParser.findVarDeclaration(currentLine) == true) {
-				// Declared variable
+
+			// Vyplneni mista promenne
+			currentLine = variableParser.checkImplicidVariable(currentLine, lastLine);
+
+			// Deklarace promenne
+			String variableValue = variableParser.findVarDeclaration(currentLine);
+			// Jestli byla uzivatelem deklarovana nova promenna
+			if (variableValue != null) {
+				lastLine = variableValue;
 				continue;
 			} else {
 				if (currentLine.equals("")) {
