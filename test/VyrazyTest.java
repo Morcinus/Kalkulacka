@@ -9,47 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class VyrazyTest {
 	@Test
-	void testOnePlusOne() {
-		String input = "1+1";
-		Vyrazy.Lexer lexer = new Vyrazy.Lexer(input);
-		Vyrazy.Node ast = Vyrazy.Parser.parse(lexer);
-
-		assertEquals("(1 + 1)", ast.format());
-		assertEquals(2, ast.compute());
-	}
-
-	@Test
-	void testSum() {
-		String input = "1+20+5+9+4";
-		Vyrazy.Lexer lexer = new Vyrazy.Lexer(input);
-		Vyrazy.Node ast = Vyrazy.Parser.parse(lexer);
-
-		assertEquals("(1 + (20 + (5 + (9 + 4))))", ast.format());
-		assertEquals(39, ast.compute());
-	}
-
-	@Test
-	void testMultiply() {
-		String input = "2*5*7*9*15";
-		Vyrazy.Lexer lexer = new Vyrazy.Lexer(input);
-		Vyrazy.Node ast = Vyrazy.Parser.parse(lexer);
-
-		assertEquals("2 * 5 * 7 * 9 * 15", ast.format());
-		assertEquals(9450, ast.compute());
-	}
-
-	@Test
-	void testMultiplyAndSum() {
-		String input = "5+5*8+2+9*4";
-		Vyrazy.Lexer lexer = new Vyrazy.Lexer(input);
-		Vyrazy.Node ast = Vyrazy.Parser.parse(lexer);
-
-		assertEquals("(5 + (5 * 8 + (2 + 9 * 4)))", ast.format());
-		assertEquals(83, ast.compute());
-	}
-
-	@Test
-	public void testMain() {
+	public void testOnePlusOne() {
 		ByteArrayOutputStream outContent = new ByteArrayOutputStream();
 		PrintStream sysOutBackup = System.out;
 		System.setOut(new PrintStream(outContent));
@@ -62,10 +22,107 @@ class VyrazyTest {
 
 		Vyrazy.main(null);
 
-		/*
-		 * System.out.print("hello"); assertEquals("hello", outContent.toString());
-		 */
 		assertEquals("'1+1' => '(1 + 1)' = 2\n", outContent.toString());
+
+		System.setIn(sysInBackup);
+		System.setOut(sysOutBackup);
+	}
+
+	@Test
+	public void testSum() {
+		ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+		PrintStream sysOutBackup = System.out;
+		System.setOut(new PrintStream(outContent));
+
+		String inputString = "1+20+5+9+4\r\n" + "\r\n";
+
+		InputStream sysInBackup = System.in; // backup System.in to restore it later
+		ByteArrayInputStream in = new ByteArrayInputStream(inputString.getBytes());
+		System.setIn(in);
+
+		Vyrazy.main(null);
+
+		assertEquals("'1+20+5+9+4' => '(1 + (20 + (5 + (9 + 4))))' = 39\n", outContent.toString());
+
+		System.setIn(sysInBackup);
+		System.setOut(sysOutBackup);
+	}
+
+	@Test
+	public void testMultiply() {
+		ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+		PrintStream sysOutBackup = System.out;
+		System.setOut(new PrintStream(outContent));
+
+		String inputString = "2*5*7*9*15\r\n" + "\r\n";
+
+		InputStream sysInBackup = System.in; // backup System.in to restore it later
+		ByteArrayInputStream in = new ByteArrayInputStream(inputString.getBytes());
+		System.setIn(in);
+
+		Vyrazy.main(null);
+
+		assertEquals("'2*5*7*9*15' => '2 * 5 * 7 * 9 * 15' = 9450\n", outContent.toString());
+
+		System.setIn(sysInBackup);
+		System.setOut(sysOutBackup);
+	}
+
+	@Test
+	public void testSumAndMultiply() {
+		ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+		PrintStream sysOutBackup = System.out;
+		System.setOut(new PrintStream(outContent));
+
+		String inputString = "5+5*8+2+9*4\r\n" + "\r\n";
+
+		InputStream sysInBackup = System.in; // backup System.in to restore it later
+		ByteArrayInputStream in = new ByteArrayInputStream(inputString.getBytes());
+		System.setIn(in);
+
+		Vyrazy.main(null);
+
+		assertEquals("'5+5*8+2+9*4' => '(5 + (5 * 8 + (2 + 9 * 4)))' = 83\n", outContent.toString());
+
+		System.setIn(sysInBackup);
+		System.setOut(sysOutBackup);
+	}
+
+	@Test
+	public void testVariables() {
+		ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+		PrintStream sysOutBackup = System.out;
+		System.setOut(new PrintStream(outContent));
+
+		String inputString = "2 * 3\r\n" + "a = 5 + 1\r\n" + "b = a + 2\r\n" + "b\r\n" + "\r\n";
+
+		InputStream sysInBackup = System.in; // backup System.in to restore it later
+		ByteArrayInputStream in = new ByteArrayInputStream(inputString.getBytes());
+		System.setIn(in);
+
+		Vyrazy.main(null);
+
+		assertEquals("'5+1+2' => '(5 + (1 + 2))' = 8\n", outContent.toString());
+
+		System.setIn(sysInBackup);
+		System.setOut(sysOutBackup);
+	}
+
+	@Test
+	public void testComments() {
+		ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+		PrintStream sysOutBackup = System.out;
+		System.setOut(new PrintStream(outContent));
+
+		String inputString = "2 * 3 # 161ad\r\n" + "a = 5 + 1 \r\n" + "b = a + 2 # aa \r\n" + "b #\r\n" + "\r\n";
+
+		InputStream sysInBackup = System.in; // backup System.in to restore it later
+		ByteArrayInputStream in = new ByteArrayInputStream(inputString.getBytes());
+		System.setIn(in);
+
+		Vyrazy.main(null);
+
+		assertEquals("'5+1+2' => '(5 + (1 + 2))' = 8\n", outContent.toString());
 
 		System.setIn(sysInBackup);
 		System.setOut(sysOutBackup);

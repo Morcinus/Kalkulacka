@@ -290,10 +290,10 @@ public class Vyrazy {
 		}
 
 		private String removeComment(String input) {
-			char charArray[] = input.toCharArray();
+			char charArray[] = input.replaceAll("\\s+", "").toCharArray();
 			for (int i = 0; i < charArray.length; i++) {
 				if (charArray[i] == '#') {
-					return String.valueOf(Arrays.copyOfRange(charArray, 0, i + 1));
+					return String.valueOf(Arrays.copyOfRange(charArray, 0, i));
 				}
 
 			}
