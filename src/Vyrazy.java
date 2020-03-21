@@ -95,7 +95,7 @@ public class Vyrazy {
 	}
 
 	public static enum TokenType {
-		NUMBER, SUM, PRODUCT, EOF
+		NUMBER, SUM, PRODUCT, L_PARENTH, R_PARENTH, EOF
 	}
 
 	public static class Token {
@@ -117,6 +117,14 @@ public class Vyrazy {
 
 		public static Token makeProduct() {
 			return new Token(TokenType.PRODUCT, 0);
+		}
+
+		public static Token makeLParenth() {
+			return new Token(TokenType.L_PARENTH, 0);
+		}
+
+		public static Token makeRParenth() {
+			return new Token(TokenType.R_PARENTH, 0);
 		}
 
 		public static Token makeEof() {
@@ -164,7 +172,13 @@ public class Vyrazy {
 					tokens.add(Token.makeSum());
 				} else if (charArray[i] == '*') {
 					tokens.add(Token.makeProduct());
-				} else if ((charArray[i] == ' ') || (charArray[i] == '\t')) {
+				} else if (charArray[i] == '(') {
+					tokens.add(Token.makeLParenth());
+				} else if (charArray[i] == ')') {
+					tokens.add(Token.makeRParenth());
+				} else
+
+				if ((charArray[i] == ' ') || (charArray[i] == '\t')) {
 					// Skip.
 				} else {
 					throw new IllegalArgumentException("Wrong input.");
@@ -215,6 +229,11 @@ public class Vyrazy {
 				lexer.next();
 				Node right = expression();
 				return new Sum(left, right);
+			}
+			if ((lexer.peek() == TokenType.R_PARENTH)) {
+				// Odstranìní pravé závorky
+				lexer.next();
+				return left;
 			} else {
 				return left;
 			}
@@ -224,8 +243,15 @@ public class Vyrazy {
 			Node left = number();
 			if (lexer.peek() == TokenType.PRODUCT) {
 				lexer.next();
-				Node right = factor();
-				return new Product(left, right);
+				if ((lexer.peek() == TokenType.L_PARENTH)) {
+					lexer.next();
+					Node right = expression();
+					return new Product(left, right);
+				} else {
+					Node right = factor();
+					return new Product(left, right);
+				}
+
 			} else {
 				return left;
 			}
@@ -238,15 +264,8 @@ public class Vyrazy {
 		}
 	}
 
-	/*
-	 * public static class Variable { private final String name; private final
-	 * char[] value;
-	 * 
-	 * private Variable(String n, char[] val) { name = n; value = val; } }
-	 */
-
 	public static class VariableParser {
-		// Variables declared by the user
+		// Promìnné deklarované uživatelem
 		public final Map<String, char[]> variables = new HashMap<>();
 
 		public VariableParser() {
@@ -337,8 +356,8 @@ public class Vyrazy {
 					String input = String.valueOf(line);
 					Lexer lexer = new Lexer(input);
 					Node ast = Parser.parse(lexer);
-					System.out.printf("'%s' => '%s' = %d\n", input, ast.format(), ast.compute());
-					// ast.tree("");
+					// System.out.printf("'%s' => '%s' = %d\n", input, ast.format(), ast.compute());
+					ast.tree("");
 				} else {
 					lastLine = currentLine;
 				}
