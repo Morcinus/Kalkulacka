@@ -1,5 +1,10 @@
 import static org.junit.Assert.assertEquals;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
+
 import org.junit.jupiter.api.Test;
 
 class VyrazyTest {
@@ -41,6 +46,29 @@ class VyrazyTest {
 
 		assertEquals("(5 + (5 * 8 + (2 + 9 * 4)))", ast.format());
 		assertEquals(83, ast.compute());
+	}
+
+	@Test
+	public void testMain() {
+		ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+		PrintStream sysOutBackup = System.out;
+		System.setOut(new PrintStream(outContent));
+
+		String inputString = "1+1\r\n" + "\r\n";
+
+		InputStream sysInBackup = System.in; // backup System.in to restore it later
+		ByteArrayInputStream in = new ByteArrayInputStream(inputString.getBytes());
+		System.setIn(in);
+
+		Vyrazy.main(null);
+
+		/*
+		 * System.out.print("hello"); assertEquals("hello", outContent.toString());
+		 */
+		assertEquals("'1+1' => '(1 + 1)' = 2\n", outContent.toString());
+
+		System.setIn(sysInBackup);
+		System.setOut(sysOutBackup);
 	}
 
 }

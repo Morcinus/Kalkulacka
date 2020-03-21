@@ -289,6 +289,17 @@ public class Vyrazy {
 			return string.toCharArray();
 		}
 
+		private String removeComment(String input) {
+			char charArray[] = input.toCharArray();
+			for (int i = 0; i < charArray.length; i++) {
+				if (charArray[i] == '#') {
+					return String.valueOf(Arrays.copyOfRange(charArray, 0, i + 1));
+				}
+
+			}
+			return input;
+		}
+
 		public String checkVariable(String input) {
 			char charArray[] = input.trim().toCharArray();
 
@@ -312,10 +323,11 @@ public class Vyrazy {
 		Scanner sc = new Scanner(System.in);
 
 		VariableParser variableParser = new VariableParser();
-
 		String lastLine = "";
 		while (sc.hasNextLine()) {
+
 			String currentLine = sc.nextLine();
+			currentLine = variableParser.removeComment(currentLine);
 			if (variableParser.findVarDeclaration(currentLine) == true) {
 				// Declared variable
 				continue;
@@ -323,11 +335,10 @@ public class Vyrazy {
 				if (currentLine.equals("")) {
 					char[] line = variableParser.fillVariableValues(lastLine.toCharArray());
 					String input = String.valueOf(line);
-					System.out.printf("input => '%s' ", input);
 					Lexer lexer = new Lexer(input);
 					Node ast = Parser.parse(lexer);
 					System.out.printf("'%s' => '%s' = %d\n", input, ast.format(), ast.compute());
-					ast.tree("");
+					// ast.tree("");
 				} else {
 					lastLine = currentLine;
 				}
