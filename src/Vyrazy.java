@@ -1,5 +1,8 @@
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Vyrazy {
@@ -143,10 +146,12 @@ public class Vyrazy {
 			// Expects input terminates with blank space
 			boolean insideNumber = false;
 			int number = 0;
-			for (char c : input.toCharArray()) {
-				if ((c >= '0') && (c <= '9')) {
+
+			char charArray[] = input.toCharArray();
+			for (int i = 0; i < charArray.length; i++) {
+				if ((charArray[i] >= '0') && (charArray[i] <= '9')) {
 					insideNumber = true;
-					number = number * 10 + (c - '0');
+					number = number * 10 + (charArray[i] - '0');
 					continue;
 				}
 
@@ -155,11 +160,11 @@ public class Vyrazy {
 					number = 0;
 					insideNumber = false;
 				}
-				if (c == '+') {
+				if (charArray[i] == '+') {
 					tokens.add(Token.makeSum());
-				} else if (c == '*') {
+				} else if (charArray[i] == '*') {
 					tokens.add(Token.makeProduct());
-				} else if ((c == ' ') || (c == '\t')) {
+				} else if ((charArray[i] == ' ') || (charArray[i] == '\t')) {
 					// Skip.
 				} else {
 					throw new IllegalArgumentException("Wrong input.");
@@ -178,6 +183,7 @@ public class Vyrazy {
 	}
 
 	public static class Parser {
+
 		private final Lexer lexer;
 
 		private Parser(Lexer lexer) {
@@ -232,13 +238,101 @@ public class Vyrazy {
 		}
 	}
 
+	/*
+	 * public static class Variable { private final String name; private final
+	 * char[] value;
+	 * 
+	 * private Variable(String n, char[] val) { name = n; value = val; } }
+	 */
+
+	public static class VariableParser {
+		// Variables declared by the user
+		public final Map<String, char[]> variables = new HashMap<>();
+
+		public VariableParser() {
+
+		}
+
+		public boolean findVarDeclaration(String input) {
+			char charArray[] = input.replaceAll("\\s+", "").toCharArray();
+
+			for (int i = 0; i < charArray.length; i++) {
+				if (charArray[i] == '=') {
+					if ((charArray[i - 1] >= 'a' && charArray[i - 1] <= 'z')
+							|| (charArray[i - 1] >= 'A' && charArray[i - 1] <= 'Z')) {
+						char[] variableValue = fillVariableValues(
+								Arrays.copyOfRange(charArray, i + 1, charArray.length));
+
+						variableValue = fillVariableValues(variableValue);
+						declareVariable(String.valueOf(charArray[i - 1]), variableValue);
+
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		private char[] fillVariableValues(char[] charArray) {
+			String string = "";
+			for (int i = 0; i < charArray.length; i++) {
+				if ((charArray[i] >= 'a' && charArray[i] <= 'z') || (charArray[i] >= 'A' && charArray[i] <= 'Z')) {
+					String character = String.valueOf(charArray[i]);
+
+					string = string + String.valueOf(variables.get(character));
+				} else {
+					string = string + charArray[i];
+				}
+
+			}
+			return string.toCharArray();
+		}
+
+		public String checkVariable(String input) {
+			char charArray[] = input.trim().toCharArray();
+
+			for (int i = 0; i < charArray.length; i++) {
+				if ((charArray[i] >= 'a' && charArray[i] <= 'z') || (charArray[i] >= 'A' && charArray[i] <= 'Z')) {
+					String character = String.valueOf(charArray[i]);
+
+					return String.valueOf(variables.get(character));
+				}
+
+			}
+			return input;
+		}
+
+		private void declareVariable(String variableName, char[] variableValue) {
+			variables.put(variableName, variableValue);
+		}
+	}
+
 	public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in);
+
+		VariableParser variableParser = new VariableParser();
+
+		String lastLine = "";
 		while (sc.hasNextLine()) {
-			Lexer lexer = new Lexer(sc.nextLine());
-			Node ast = Parser.parse(lexer);
-			System.out.printf("'%s' => '%s' = %d\n", sc.nextLine(), ast.format(), ast.compute());
-			ast.tree("");
+			String currentLine = sc.nextLine();
+			if (variableParser.findVarDeclaration(currentLine) == true) {
+				// Declared variable
+				continue;
+			} else {
+				if (currentLine.equals("")) {
+					char[] line = variableParser.fillVariableValues(lastLine.toCharArray());
+					String input = String.valueOf(line);
+					System.out.printf("input => '%s' ", input);
+					Lexer lexer = new Lexer(input);
+					Node ast = Parser.parse(lexer);
+					System.out.printf("'%s' => '%s' = %d\n", input, ast.format(), ast.compute());
+					ast.tree("");
+				} else {
+					lastLine = currentLine;
+				}
+			}
+
 		}
 	}
 }
