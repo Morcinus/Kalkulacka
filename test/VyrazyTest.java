@@ -189,4 +189,24 @@ class VyrazyTest {
 		System.setOut(sysOutBackup);
 	}
 
+	@Test
+	public void testMultipleParentheses() {
+		ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+		PrintStream sysOutBackup = System.out;
+		System.setOut(new PrintStream(outContent));
+
+		String inputString = "2*(3+4*(2+1))+1\r\n" + "\r\n";
+
+		InputStream sysInBackup = System.in; // backup System.in to restore it later
+		ByteArrayInputStream in = new ByteArrayInputStream(inputString.getBytes());
+		System.setIn(in);
+
+		Vyrazy.main(null);
+
+		assertEquals("'2*(3+4*(2+1))+1' => '(2 * (3 + 4 * (2 + 1)) + 1)' = 31\n", outContent.toString());
+
+		System.setIn(sysInBackup);
+		System.setOut(sysOutBackup);
+	}
+
 }
