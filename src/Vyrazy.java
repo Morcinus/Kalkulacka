@@ -279,11 +279,11 @@ public class Vyrazy {
 		return input;
 	}
 
-	public static class VariableParser {
+	public static class VariableManager {
 		// Promìnné deklarované uživatelem
 		public final Map<String, char[]> variables = new HashMap<>();
 
-		public VariableParser() {
+		public VariableManager() {
 		}
 
 		public Boolean containsVariableDeclaration(String input) {
@@ -312,7 +312,7 @@ public class Vyrazy {
 			return null;
 		}
 
-		// Za místa názvù promìnných dosadí jejich hodnoty
+		// Na místa názvù promìnných dosadí jejich hodnoty
 		private char[] fillVariableValues(char[] charArray) {
 			String string = "";
 			for (int i = 0; i < charArray.length; i++) {
@@ -328,6 +328,7 @@ public class Vyrazy {
 			return string.toCharArray();
 		}
 
+		// Na místa implicitních promìnných dosadí hodnotu posledního øádku
 		public String fillImplicidVariable(String input, String lastLine) {
 			input.replaceAll("\\s+", "");
 
@@ -354,7 +355,7 @@ public class Vyrazy {
 	public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in);
 
-		VariableParser variableParser = new VariableParser();
+		VariableManager variableManager = new VariableManager();
 
 		String lastLine = "";
 		while (sc.hasNextLine()) {
@@ -366,13 +367,13 @@ public class Vyrazy {
 
 			// Dosadi do mista implicitni promenne predchozi radek
 			if (currentLine.contains("_")) {
-				currentLine = variableParser.fillImplicidVariable(currentLine, lastLine);
+				currentLine = variableManager.fillImplicidVariable(currentLine, lastLine);
 			}
 
 			// Jestli byla v radku deklarovana nova promenna
-			if (variableParser.containsVariableDeclaration(currentLine)) {
+			if (variableManager.containsVariableDeclaration(currentLine)) {
 				// Deklarace promenne
-				String variableValue = variableParser.declareVariable(currentLine);
+				String variableValue = variableManager.declareVariable(currentLine);
 
 				lastLine = variableValue;
 				continue;
@@ -380,7 +381,7 @@ public class Vyrazy {
 				// Jestli je posledni radek
 				if (currentLine.equals("")) {
 					// Dosazeni hodnot promennych
-					char[] line = variableParser.fillVariableValues(lastLine.toCharArray());
+					char[] line = variableManager.fillVariableValues(lastLine.toCharArray());
 					String input = String.valueOf(line);
 
 					// Lexer a parser
