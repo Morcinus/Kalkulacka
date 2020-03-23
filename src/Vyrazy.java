@@ -244,7 +244,10 @@ public class Vyrazy {
 			if (lexer.peek() == TokenType.PRODUCT) {
 				lexer.next();
 				if ((lexer.peek() == TokenType.L_PARENTH)) {
+					// Odstranìní levé závorky
 					lexer.next();
+
+					// Pøiøazení vnitøku závorky do expression (spoleènì s ")")
 					Node right = expression();
 					return new Product(left, right);
 				} else {
@@ -264,15 +267,31 @@ public class Vyrazy {
 		}
 	}
 
+	// Odstraní komentáø z daného øádku
+	public static String removeComment(String input) {
+		char charArray[] = input.replaceAll("\\s+", "").toCharArray();
+		for (int i = 0; i < charArray.length; i++) {
+			if (charArray[i] == '#') {
+				return String.valueOf(Arrays.copyOfRange(charArray, 0, i));
+			}
+
+		}
+		return input;
+	}
+
 	public static class VariableParser {
 		// Promìnné deklarované uživatelem
 		public final Map<String, char[]> variables = new HashMap<>();
 
 		public VariableParser() {
-
 		}
 
-		public String findVarDeclaration(String input) {
+		public Boolean containsVariableDeclaration(String input) {
+			return input.contains("=");
+		}
+
+		// Uloží název promìnné a její hodnotu
+		public String declareVariable(String input) {
 			char charArray[] = input.replaceAll("\\s+", "").toCharArray();
 
 			for (int i = 0; i < charArray.length; i++) {
@@ -283,7 +302,7 @@ public class Vyrazy {
 								Arrays.copyOfRange(charArray, i + 1, charArray.length));
 
 						variableValue = fillVariableValues(variableValue);
-						declareVariable(String.valueOf(charArray[i - 1]), variableValue);
+						variables.put(String.valueOf(charArray[i - 1]), variableValue);
 
 						return String.valueOf(variableValue);
 					}
@@ -293,6 +312,7 @@ public class Vyrazy {
 			return null;
 		}
 
+		// Za místa názvù promìnných dosadí jejich hodnoty
 		private char[] fillVariableValues(char[] charArray) {
 			String string = "";
 			for (int i = 0; i < charArray.length; i++) {
@@ -308,60 +328,26 @@ public class Vyrazy {
 			return string.toCharArray();
 		}
 
-		private String removeComment(String input) {
-			char charArray[] = input.replaceAll("\\s+", "").toCharArray();
-			for (int i = 0; i < charArray.length; i++) {
-				if (charArray[i] == '#') {
-					return String.valueOf(Arrays.copyOfRange(charArray, 0, i));
-				}
-
-			}
-			return input;
-		}
-
-		public String checkVariable(String input) {
-			char charArray[] = input.trim().toCharArray();
-
-			for (int i = 0; i < charArray.length; i++) {
-				if ((charArray[i] >= 'a' && charArray[i] <= 'z') || (charArray[i] >= 'A' && charArray[i] <= 'Z')) {
-					String character = String.valueOf(charArray[i]);
-
-					return String.valueOf(variables.get(character));
-				}
-
-			}
-			return input;
-		}
-
-		public String checkImplicidVariable(String input, String lastLine) {
+		public String fillImplicidVariable(String input, String lastLine) {
 			input.replaceAll("\\s+", "");
 
-			if (input.contains("_")) {
-				String[] strings = input.split("_");
+			String[] strings = input.split("_");
 
-				if (strings.length == 0) {
-					return lastLine;
-				} else if (strings.length == 1) {
-					if (strings[0].charAt(strings[0].length() - 1) == '*')
-						return strings[0] + "(" + lastLine + ")";
-					else {
-						return strings[0] + lastLine;
-					}
-				} else {
-					if (strings[0].charAt(strings[0].length() - 1) == '*') {
-						return strings[0] + "(" + lastLine + ")" + strings[1];
-					} else {
-						return strings[0] + lastLine + strings[1];
-					}
+			if (strings.length == 0) {
+				return lastLine;
+			} else if (strings.length == 1) {
+				if (strings[0].charAt(strings[0].length() - 1) == '*')
+					return strings[0] + "(" + lastLine + ")";
+				else {
+					return strings[0] + lastLine;
 				}
-
 			} else {
-				return input;
+				if (strings[0].charAt(strings[0].length() - 1) == '*') {
+					return strings[0] + "(" + lastLine + ")" + strings[1];
+				} else {
+					return strings[0] + lastLine + strings[1];
+				}
 			}
-		}
-
-		private void declareVariable(String variableName, char[] variableValue) {
-			variables.put(variableName, variableValue);
 		}
 	}
 
@@ -369,26 +355,35 @@ public class Vyrazy {
 		Scanner sc = new Scanner(System.in);
 
 		VariableParser variableParser = new VariableParser();
+
 		String lastLine = "";
 		while (sc.hasNextLine()) {
 
+			// Nacteni radku
 			String currentLine = sc.nextLine();
 			// Odstraneni komentare
-			currentLine = variableParser.removeComment(currentLine);
+			currentLine = removeComment(currentLine);
 
-			// Vyplneni mista promenne
-			currentLine = variableParser.checkImplicidVariable(currentLine, lastLine);
+			// Dosadi do mista implicitni promenne predchozi radek
+			if (currentLine.contains("_")) {
+				currentLine = variableParser.fillImplicidVariable(currentLine, lastLine);
+			}
 
-			// Deklarace promenne
-			String variableValue = variableParser.findVarDeclaration(currentLine);
-			// Jestli byla uzivatelem deklarovana nova promenna
-			if (variableValue != null) {
+			// Jestli byla v radku deklarovana nova promenna
+			if (variableParser.containsVariableDeclaration(currentLine)) {
+				// Deklarace promenne
+				String variableValue = variableParser.declareVariable(currentLine);
+
 				lastLine = variableValue;
 				continue;
 			} else {
+				// Jestli je posledni radek
 				if (currentLine.equals("")) {
+					// Dosazeni hodnot promennych
 					char[] line = variableParser.fillVariableValues(lastLine.toCharArray());
 					String input = String.valueOf(line);
+
+					// Lexer a parser
 					Lexer lexer = new Lexer(input);
 					Node ast = Parser.parse(lexer);
 					System.out.printf("'%s' => '%s' = %d\n", input, ast.format(), ast.compute());
